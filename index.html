@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENS 301 – Entrepreneurship Quiz</title>
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --card: #122032;
+    --teal: #00b4d8;
+    --teal2: #0077b6;
+    --gold: #f4a261;
+    --white: #ffffff;
+    --muted: #90a4ae;
+    --correct: #00c897;
+    --wrong: #ff5252;
+    --neutral: #1e3a50;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--navy); color: var(--white); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--teal2), #023e58);
+    padding: 1.4rem 1.6rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid var(--teal);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: .5px; }
+  header span { font-size: .85rem; color: var(--gold); font-weight: 600; }
+
+  /* ── PROGRESS BAR ── */
+  #prog-wrap { background: #0a151f; height: 5px; }
+  #prog-bar { height: 5px; background: var(--teal); width: 0; transition: width .4s; }
+
+  /* ── TIMER STRIP ── */
+  #timer-strip {
+    display: flex; align-items: center; justify-content: center; gap: 1rem;
+    padding: .6rem 1rem; background: var(--card);
+  }
+  #timer { font-size: 1.1rem; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+  #score-live { font-size: .9rem; color: var(--teal); }
+
+  /* ── QUESTION NAVIGATOR ── */
+  #nav-panel {
+    display: flex; flex-wrap: wrap; gap: .4rem; padding: .8rem 1rem;
+    background: #0b1b28; border-bottom: 1px solid #1c3347;
+  }
+  .nav-btn {
+    width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: .8rem; font-weight: 700; background: var(--neutral); color: var(--muted);
+    transition: all .2s;
+  }
+  .nav-btn.answered { background: var(--teal2); color: #fff; }
+  .nav-btn.correct  { background: var(--correct); color: #fff; }
+  .nav-btn.wrong    { background: var(--wrong); color: #fff; }
+  .nav-btn.active   { outline: 2px solid var(--gold); }
+
+  /* ── MAIN AREA ── */
+  main { max-width: 760px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: var(--card); border-radius: 12px; padding: 1.4rem 1.6rem;
+    border: 1px solid #1e3a50; animation: fadeIn .35s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  .q-meta {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: .9rem;
+  }
+  .q-label {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    background: var(--teal2); color: #fff; padding: .2rem .7rem; border-radius: 20px;
+    letter-spacing: .5px;
+  }
+  .q-num { font-size: .8rem; color: var(--muted); }
+
+  .q-text { font-size: 1rem; line-height: 1.6; margin-bottom: 1.2rem; color: #e0eaf2; }
+
+  /* ── OPTIONS ── */
+  .options { display: flex; flex-direction: column; gap: .65rem; }
+  .opt {
+    background: var(--neutral); border: 1.5px solid #1e3a50; border-radius: 9px;
+    padding: .8rem 1rem; cursor: pointer; font-size: .92rem; transition: all .18s;
+    display: flex; align-items: flex-start; gap: .75rem; user-select: none;
+  }
+  .opt:hover:not(.locked) { border-color: var(--teal); background: #1b3450; }
+  .opt.selected { border-color: var(--teal); background: #173348; }
+  .opt.correct  { border-color: var(--correct); background: #0d2b20; color: #a3ffdb; }
+  .opt.wrong    { border-color: var(--wrong);   background: #2b0f0f; color: #ffaaaa; }
+  .opt-letter {
+    min-width: 24px; height: 24px; border-radius: 50%; background: #0d1b2a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; font-weight: 700; color: var(--teal); border: 1px solid #1e3a50;
+  }
+  .opt.correct .opt-letter { background: var(--correct); color: #fff; border-color: var(--correct); }
+  .opt.wrong   .opt-letter { background: var(--wrong);   color: #fff; border-color: var(--wrong); }
+  .opt-text { line-height: 1.45; }
+
+  /* ── EXPLANATION ── */
+  .explanation {
+    margin-top: 1rem; padding: .9rem 1rem; border-radius: 8px;
+    background: #0a2030; border-left: 3px solid var(--gold);
+    font-size: .88rem; color: #cde4f0; line-height: 1.55; display: none;
+  }
+  .explanation.show { display: block; animation: fadeIn .3s; }
+  .explanation strong { color: var(--gold); }
+
+  /* ── NAV BUTTONS ── */
+  .btn-row { display: flex; gap: .7rem; margin-top: 1.2rem; justify-content: flex-end; }
+  .btn {
+    padding: .6rem 1.3rem; border-radius: 8px; border: none; cursor: pointer;
+    font-size: .9rem; font-weight: 700; transition: all .2s;
+  }
+  .btn-skip { background: #1e3a50; color: var(--muted); }
+  .btn-skip:hover { background: #2a4f6e; }
+  .btn-next { background: var(--teal2); color: #fff; }
+  .btn-next:hover { background: var(--teal); }
+  .btn-submit { background: var(--gold); color: #0d1b2a; }
+  .btn-submit:hover { filter: brightness(1.1); }
+
+  /* ── RESULTS ── */
+  #results {
+    display: none; max-width: 700px; margin: 2rem auto; padding: 1rem;
+    animation: fadeIn .5s;
+  }
+  .result-hero {
+    background: var(--card); border-radius: 14px; padding: 2rem; text-align: center;
+    border: 1px solid #1e3a50; margin-bottom: 1.4rem;
+  }
+  .grade-circle {
+    width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 1rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 2.2rem; font-weight: 900; border: 5px solid var(--teal);
+  }
+  .grade-circle span { font-size: .75rem; font-weight: 400; color: var(--muted); }
+  .result-hero h2 { font-size: 1.4rem; margin-bottom: .4rem; }
+  .result-hero p { color: var(--muted); font-size: .9rem; }
+  .stats-row { display: flex; gap: .8rem; justify-content: center; margin-top: 1.2rem; }
+  .stat-box {
+    background: #0a1824; border-radius: 8px; padding: .7rem 1.2rem; text-align: center;
+    min-width: 80px;
+  }
+  .stat-box .val { font-size: 1.5rem; font-weight: 800; }
+  .stat-box .lbl { font-size: .7rem; color: var(--muted); text-transform: uppercase; }
+  .btn-restart { background: var(--gold); color: #0d1b2a; padding: .75rem 2rem; border-radius: 8px; border: none; cursor: pointer; font-size: 1rem; font-weight: 700; margin-top: 1.2rem; }
+  .btn-restart:hover { filter: brightness(1.1); }
+
+  /* ── REVIEW ── */
+  .review-item { background: var(--card); border-radius: 10px; padding: 1.1rem 1.2rem; margin-bottom: .8rem; border: 1px solid #1e3a50; }
+  .review-item.r-correct { border-left: 4px solid var(--correct); }
+  .review-item.r-wrong   { border-left: 4px solid var(--wrong); }
+  .review-q { font-size: .9rem; color: #d0e8f5; margin-bottom: .5rem; font-weight: 600; }
+  .review-ans { font-size: .83rem; }
+  .review-ans .your-ans { color: var(--wrong); }
+  .review-ans .correct-ans { color: var(--correct); }
+  .review-exp { font-size: .8rem; color: var(--muted); margin-top: .4rem; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎓 ENS 301 — Entrepreneurship &amp; Innovation</h1>
+  <span id="hdr-qcount">Q 1 / 30</span>
+</header>
+<div id="prog-wrap"><div id="prog-bar"></div></div>
+
+<div id="timer-strip">
+  <div>⏱ <span id="timer">30:00</span></div>
+  <div id="score-live">Score: <b id="sc-val">0</b> / <b id="sc-tot">0</b> answered</div>
+</div>
+
+<div id="nav-panel"></div>
+
+<main id="quiz-main">
+  <div class="q-card" id="q-card">
+    <!-- filled by JS -->
+  </div>
+</main>
+
+<div id="results">
+  <div class="result-hero">
+    <div class="grade-circle" id="grade-circle">
+      <span id="pct">--</span>
+      <span id="grade-lbl">--</span>
+    </div>
+    <h2 id="result-title">--</h2>
+    <p id="result-sub">--</p>
+    <div class="stats-row">
+      <div class="stat-box"><div class="val" id="res-correct" style="color:var(--correct)">0</div><div class="lbl">Correct</div></div>
+      <div class="stat-box"><div class="val" id="res-wrong"   style="color:var(--wrong)">0</div><div class="lbl">Wrong</div></div>
+      <div class="stat-box"><div class="val" id="res-skip"    style="color:var(--muted)">0</div><div class="lbl">Skipped</div></div>
+      <div class="stat-box"><div class="val" id="res-time"    style="color:var(--gold)">0:00</div><div class="lbl">Time</div></div>
+    </div>
+    <button class="btn-restart" onclick="restart()">🔄 Restart Quiz</button>
+  </div>
+  <h3 style="margin-bottom:.8rem;font-size:1rem;color:var(--teal)">📋 Review</h3>
+  <div id="review-list"></div>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ── Q1 THEORIES ──
+  {
+    topic:"Theories of Entrepreneurship",
+    q:"According to Schumpeter's Innovation Theory, the entrepreneur's primary role is to:",
+    opts:[
+      "Bear uninsurable risks to earn profit",
+      "Maximise profit through rational resource allocation",
+      "Introduce new combinations that disturb economic equilibrium",
+      "Coordinate existing factors of production efficiently"
+    ],
+    ans:2,
+    exp:"Schumpeter described the entrepreneur as an innovator who introduces new combinations — new products, methods, markets, or supply sources — thereby creating 'creative destruction' and disturbing equilibrium."
+  },
+  {
+    topic:"Theories of Entrepreneurship",
+    q:"The Risk-Bearing Theory (associated with Cantillon and Knight) argues that the entrepreneur's profit is essentially:",
+    opts:[
+      "A reward for organising labour and capital",
+      "A return on investment similar to interest",
+      "Compensation for bearing uninsurable, uncertain risk",
+      "Payment for introducing new technology"
+    ],
+    ans:2,
+    exp:"Knight distinguished between measurable risk (insurable) and true uncertainty (uninsurable). Profit, in this theory, is the entrepreneur's reward for bearing uninsurable uncertainty."
+  },
+  // ── CULTURAL FACTORS ──
+  {
+    topic:"Cultural Factors",
+    q:"A young entrepreneur from a business-oriented family who leverages ethnic rotating-credit associations (Esusu) is primarily drawing on which cultural factor?",
+    opts:[
+      "Education",
+      "Religious/Ethnic Sentiment",
+      "Language",
+      "Government policy"
+    ],
+    ans:1,
+    exp:"Esusu (rotating savings clubs) is a product of ethnic/religious trust networks. This illustrates how Religious/Ethnic Sentiment provides informal capital and cooperative support systems."
+  },
+  {
+    topic:"Cultural Factors",
+    q:"Which cultural factor most directly reduces information asymmetry between an entrepreneur and their target market?",
+    opts:[
+      "Background/Family",
+      "Religious belief",
+      "Language",
+      "Education level"
+    ],
+    ans:2,
+    exp:"Shared language reduces barriers in communication, negotiation, and marketing, directly lowering information asymmetry between the entrepreneur and local customers."
+  },
+  // ── BENEFITS OF ENTREPRENEURIAL SKILLS ──
+  {
+    topic:"Benefits of Entrepreneurial Skills",
+    q:"Which of the following is NOT typically listed as a national-development benefit of entrepreneurial skills acquisition?",
+    opts:[
+      "Capital formation through reinvestment of profits",
+      "Import substitution by producing local alternatives",
+      "Reduction of government expenditure on defence",
+      "Regional development by spreading economic activity"
+    ],
+    ans:2,
+    exp:"Defence spending reduction is not linked to entrepreneurial skills. The standard benefits include job creation, wealth creation, innovation, capital formation, import substitution, and regional development."
+  },
+  // ── CREATIVE PERSONALITY ──
+  {
+    topic:"Creative Personality",
+    q:"An entrepreneur who willingly launches a product with incomplete market data, tolerating the possibility of failure, is exhibiting which characteristic of the creative personality?",
+    opts:[
+      "Persistence",
+      "Observance",
+      "Risk-taking",
+      "Self-discipline"
+    ],
+    ans:2,
+    exp:"Risk-taking is defined as the willingness to attempt unproven ideas despite the possibility of failure — precisely what launching under uncertainty demonstrates."
+  },
+  {
+    topic:"Creative Personality",
+    q:"Which pairing of creative personality traits best explains why two entrepreneurs working independently often arrive at similar breakthrough solutions?",
+    opts:[
+      "Persistent + Flexible",
+      "Observant + Open-minded",
+      "Imaginative + Independent",
+      "Curious + Self-disciplined"
+    ],
+    ans:1,
+    exp:"Being observant (noticing the same patterns/problems) combined with open-mindedness (receptive to multiple perspectives) often leads different individuals to converge on similar creative solutions."
+  },
+  // ── METHODS FOR CREATIVE RESULTS ──
+  {
+    topic:"Methods for Creative Results",
+    q:"A product team uses the acronym 'SCAMPER' to generate ideas. Which classic method category does this technique best represent?",
+    opts:[
+      "Brainstorming",
+      "Lateral Thinking",
+      "Synectics",
+      "Mind Mapping"
+    ],
+    ans:0,
+    exp:"SCAMPER (Substitute, Combine, Adapt, Modify, Put to other uses, Eliminate, Reverse) is a structured brainstorming tool — it systematically forces idea generation, placing it firmly within the brainstorming category of creative methods."
+  },
+  {
+    topic:"Methods for Creative Results",
+    q:"Among the Five Classic Methods for producing creative results, which describes adopting an existing idea in an entirely new context?",
+    opts:[
+      "Evolution",
+      "Revolution",
+      "Reapplication",
+      "Synthesis"
+    ],
+    ans:2,
+    exp:"Reapplication involves taking an existing concept or technology and applying it to a new market or context — e.g., applying barcode technology (retail) to blood-bank management (healthcare)."
+  },
+  // ── MYTHS ABOUT CREATIVITY ──
+  {
+    topic:"Myths about Creative Thinking",
+    q:"A student believes 'the best answer has already been found by someone smarter.' Which creativity myth does this reflect?",
+    opts:[
+      "Creative people are born, not made",
+      "Every problem has only one correct solution",
+      "Creative answers are always technologically complex",
+      "The best answer has already been found"
+    ],
+    ans:3,
+    exp:"The myth that 'the best answer has already been found' discourages innovation. In reality, every generation uncovers better solutions as context, technology, and needs evolve."
+  },
+  {
+    topic:"Myths about Creative Thinking",
+    q:"Which of these is actually TRUE about creativity — not a myth?",
+    opts:[
+      "Creative thinking is only useful in artistic fields",
+      "Most complex problems have exactly one optimal solution",
+      "Fear of judgment is a real but surmountable block to creativity",
+      "Creative individuals are exclusively born with the trait"
+    ],
+    ans:2,
+    exp:"Fear of judgment is a real psychological barrier to creativity — this is a fact, not a myth. The myths are: that creativity is only for artists, that problems have one solution, or that creativity is purely innate."
+  },
+  // ── COPYRIGHT INFRINGEMENT ──
+  {
+    topic:"Intellectual Property",
+    q:"A blogger translates a copyrighted novel into another language and publishes it without permission. This infringes copyright under which condition?",
+    opts:[
+      "Public performance",
+      "Reproduction",
+      "Adaptation / Derivative works",
+      "Broadcasting"
+    ],
+    ans:2,
+    exp:"Creating a translation is creating a derivative work — a new work based on the original. Without the copyright holder's consent, this constitutes infringement under the adaptation/derivative works condition."
+  },
+  {
+    topic:"Intellectual Property",
+    q:"Which scenario does NOT constitute copyright infringement?",
+    opts:[
+      "Selling 500 unauthorised copies of a textbook",
+      "Performing a copyrighted play publicly without a licence",
+      "Writing a personal summary of a chapter for private study",
+      "Broadcasting a song on radio without a royalty agreement"
+    ],
+    ans:2,
+    exp:"Writing a private summary for personal study typically falls under 'fair use' (or fair dealing) and does not constitute infringement. All other options involve commercial exploitation or public use without authorisation."
+  },
+  // ── IP MEASURES ──
+  {
+    topic:"Intellectual Property",
+    q:"An inventor files for exclusive rights over a new engine design, requiring full public disclosure in exchange for 20 years of protection. This describes:",
+    opts:[
+      "Copyright",
+      "Trademark",
+      "Patent",
+      "Royalty"
+    ],
+    ans:2,
+    exp:"A patent grants exclusive rights to manufacture, use, or sell an invention for 20 years, requiring the inventor to fully disclose the invention. Copyright protects creative works; trademark protects brand identifiers; royalty is a payment mechanism."
+  },
+  {
+    topic:"Intellectual Property",
+    q:"A company's distinctive logo that identifies its goods has been in continuous use for 40 years. It is protected under:",
+    opts:[
+      "Patent — because it was a novel creation",
+      "Copyright — because artistic works are protected for life + 70 years",
+      "Trademark — because it identifies the commercial source of goods",
+      "Royalty — because the company earns income from licensing it"
+    ],
+    ans:2,
+    exp:"A logo that distinguishes a company's goods/services in the marketplace is a trademark. Trademarks can be renewed indefinitely so long as they remain in commercial use — making them ideal for enduring brand identifiers."
+  },
+  // ── TRANSFER VS OWNERSHIP ──
+  {
+    topic:"Intellectual Property",
+    q:"After signing an assignment deed, an author no longer controls who publishes her novel. However, she insists her name must appear on every edition. This right she retains is called:",
+    opts:[
+      "Economic right",
+      "Moral right (right of attribution)",
+      "Neighbouring right",
+      "Exclusive licence"
+    ],
+    ans:1,
+    exp:"Even after transferring economic/copyright rights, creators often retain moral rights — including the right of attribution (to be identified as the author). This right typically cannot be transferred or waived under many legal systems."
+  },
+  {
+    topic:"Intellectual Property",
+    q:"An exclusive licence differs from a full copyright assignment in that:",
+    opts:[
+      "The licensee owns the copyright permanently",
+      "The original creator loses all moral rights",
+      "The owner retains copyright but grants specific rights to the licensee for a limited scope",
+      "The licensee can reassign the rights to third parties without restriction"
+    ],
+    ans:2,
+    exp:"In an exclusive licence, the copyright owner retains ownership but grants the licensee sole rights to use the work within a defined scope/territory/time. In a full assignment, all rights transfer permanently."
+  },
+  // ── ROLES OF ENTREPRENEUR ──
+  {
+    topic:"Roles of Entrepreneurs",
+    q:"When Dangote Group moves into cement production to meet local demand previously served by imports, which entrepreneurial role is most prominently demonstrated?",
+    opts:[
+      "Risk-bearer in an established industry",
+      "Change agent driving import substitution and structural economic change",
+      "Coordinator of pre-existing production factors",
+      "Resource mobiliser seeking foreign capital"
+    ],
+    ans:1,
+    exp:"By transforming Nigeria's cement industry — reducing imports and reshaping supply chains — Dangote acts as a change agent who drives structural economic transformation, a key entrepreneurial role."
+  },
+  {
+    topic:"Roles of Entrepreneurs",
+    q:"An entrepreneur who raises angel investment, recruits a management team, and leases a facility before generating any revenue is primarily fulfilling the role of:",
+    opts:[
+      "Innovator",
+      "Decision-maker",
+      "Resource mobiliser and organiser",
+      "Risk-bearer"
+    ],
+    ans:2,
+    exp:"Raising capital, assembling a team, and securing facilities are classic functions of resource mobilisation and organisation — bringing together the factors of production before operations begin."
+  },
+  // ── TECHNOLOGY & OPPORTUNITIES ──
+  {
+    topic:"Technology & Entrepreneurial Opportunities",
+    q:"Which of the following Nigerian institutions was specifically established to facilitate the acquisition and utilisation of foreign technologies for local commercial use?",
+    opts:[
+      "FIIRO — Federal Institute of Industrial Research, Oshodi",
+      "RMRDC — Raw Material Research and Development Council",
+      "NOTAP — National Office for Technology Acquisition and Promotion",
+      "TIC — Technology Incubation Centres"
+    ],
+    ans:2,
+    exp:"NOTAP was created to regulate and facilitate the transfer of foreign technology to Nigeria — ensuring that acquired technologies are adapted and commercialised locally. FIIRO focuses on industrial R&D; RMRDC on raw materials; TIC on nurturing tech startups."
+  },
+  {
+    topic:"Technology & Entrepreneurial Opportunities",
+    q:"E-commerce platforms enabling farmers in rural Nigeria to sell directly to Lagos consumers best illustrate which form of technological entrepreneurial opportunity?",
+    opts:[
+      "Process innovation reducing production costs",
+      "New market creation overcoming geographical barriers",
+      "Knowledge-based IP-driven business models",
+      "Spin-offs from government R&D"
+    ],
+    ans:1,
+    exp:"Digital marketplaces that connect producers to buyers across geography are classic examples of new market creation — technology removes distance as a barrier, creating previously inaccessible markets."
+  },
+  // ── CHANGE FACTORS ──
+  {
+    topic:"Entrepreneurial Environment",
+    q:"Nigeria's 2023 fuel subsidy removal, which triggered widespread price increases and forced entrepreneurs to rethink cost structures, is best categorised as which type of environmental change factor?",
+    opts:[
+      "Technological factor",
+      "Social/Cultural factor",
+      "Political/Legal factor",
+      "Ecological factor"
+    ],
+    ans:2,
+    exp:"A government policy decision (subsidy removal) is a Political/Legal factor. It changes the regulatory and economic rules within which businesses operate."
+  },
+  {
+    topic:"Entrepreneurial Environment",
+    q:"Which factor does NOT belong to the PESTEL framework used to analyse the entrepreneurial macro-environment?",
+    opts:[
+      "Ecological",
+      "Technological",
+      "Entrepreneurial personality",
+      "Legal"
+    ],
+    ans:2,
+    exp:"PESTEL stands for Political, Economic, Social, Technological, Ecological, Legal. 'Entrepreneurial personality' is an internal personal characteristic, not an external environmental factor in this framework."
+  },
+  // ── FAMILY BUSINESS ──
+  {
+    topic:"Family Business",
+    q:"According to the Ten Commandments of Family Business, compensating family employees 'at market rates' primarily addresses which risk?",
+    opts:[
+      "Succession planning failure",
+      "Inadequate governance structure",
+      "Nepotism leading to overpayment or resentment from non-family staff",
+      "Poor conflict resolution mechanisms"
+    ],
+    ans:2,
+    exp:"Paying family members at market (not inflated family) rates prevents nepotism, ensures fairness to non-family employees, and maintains business financial discipline."
+  },
+  {
+    topic:"Family Business",
+    q:"A family enterprise where the founder's children disagree on strategic direction but there is no agreed process to resolve disputes illustrates a violation of which commandment?",
+    opts:[
+      "Separate family finances from business finances",
+      "Establish a conflict resolution mechanism",
+      "Create a formal governance structure",
+      "Develop a succession plan early"
+    ],
+    ans:1,
+    exp:"Without a pre-agreed conflict resolution mechanism, disputes between family members escalate and threaten the business. This commandment exists precisely to provide a structured, neutral process for handling disagreements."
+  },
+  // ── WOMEN ENTREPRENEURSHIP ──
+  {
+    topic:"Women Entrepreneurship",
+    q:"In Nigeria, women often cannot access bank loans because they lack titled land to use as collateral. This barrier is primarily:",
+    opts:[
+      "Social/Cultural — patriarchal norms restrict business activity",
+      "Legal/Structural — land and property laws that disadvantage women",
+      "Educational — low skill levels among women entrepreneurs",
+      "Market — limited mobility reduces women's customer access"
+    ],
+    ans:1,
+    exp:"The inability to own titled land stems from inheritance and property laws (often customary or statutory) that disadvantage women — this is a legal/structural barrier, not merely a cultural attitude."
+  },
+  {
+    topic:"Women Entrepreneurship",
+    q:"Which barrier to women entrepreneurship is INTERNAL to the woman entrepreneur, unlike the others?",
+    opts:[
+      "Lack of access to credit",
+      "Exclusion from male-dominated business networks",
+      "Self-limiting beliefs and low confidence",
+      "Restrictive government regulations"
+    ],
+    ans:2,
+    exp:"Self-limiting beliefs and low confidence are psychological/internal barriers, shaped by socialisation. Credit access, network exclusion, and regulations are external structural barriers."
+  },
+  // ── SOCIAL ENTREPRENEURSHIP ──
+  {
+    topic:"Social Entrepreneurship",
+    q:"A government policy that requires public procurement contracts to include a minimum percentage allocation to social enterprises is an example of:",
+    opts:[
+      "Tax incentive support",
+      "Capacity building",
+      "Market access support through preferential procurement",
+      "Infrastructure provision"
+    ],
+    ans:2,
+    exp:"Setting aside a percentage of public contracts for social enterprises is preferential procurement — a market-access mechanism that guarantees demand and revenue for qualifying social enterprises."
+  },
+  // ── BUSINESS OPPORTUNITIES ──
+  {
+    topic:"Business Opportunities in Nigeria",
+    q:"A FUTO graduate notices that 70% of smartphones imported into Nigeria have cracked screens within 6 months due to poor case quality, and starts a local phone-case manufacturing company. This opportunity was identified through:",
+    opts:[
+      "SWOT Analysis",
+      "Demographic change observation",
+      "Identifying a consumer gap/unmet need",
+      "Government deregulation policy"
+    ],
+    ans:2,
+    exp:"Noticing a recurring consumer problem (poor quality cases) and creating a solution is a textbook case of identifying an unmet consumer need — one of the primary sources of business opportunities."
+  },
+  {
+    topic:"Business Opportunities in Nigeria",
+    q:"Nigeria's large youth population (over 60% under 25) creating demand for affordable entertainment, education apps, and fashion is an opportunity arising from:",
+    opts:[
+      "Import substitution",
+      "Demographic change",
+      "Natural resource abundance",
+      "SWOT Analysis"
+    ],
+    ans:1,
+    exp:"A large, young population segment with specific consumption patterns is a demographic change factor that creates predictable, scalable market opportunities for entrepreneurs targeting that segment."
+  },
+  {
+    topic:"Business Opportunities in Nigeria",
+    q:"An entrepreneur conducts a systematic internal and external analysis of her food-processing business, mapping her production advantage against the absence of local competitors, before launching. This process is best described as:",
+    opts:[
+      "PESTEL analysis of the macro-environment",
+      "Opportunity identification via SWOT analysis",
+      "Market segmentation and targeting",
+      "Technology feasibility assessment"
+    ],
+    ans:1,
+    exp:"Systematically evaluating Strengths (production advantage), Weaknesses, Opportunities (no local competitor), and Threats is SWOT analysis — listed explicitly as a source of business opportunity identification."
+  },
+
+  // ── Q31 – THEORIES (extra) ──
+  {
+    topic:"Theories of Entrepreneurship",
+    q:"The Neo-Classical Theory differs from the Classical Theory of Entrepreneurship mainly because it:",
+    opts:[
+      "Emphasises profit maximisation as the entrepreneur's only goal",
+      "Focuses on the entrepreneur as a coordinator who combines factors of production",
+      "Argues entrepreneurs are driven purely by social motives",
+      "Treats entrepreneurship as a response to market disequilibrium"
+    ],
+    ans:1,
+    exp:"The Neo-Classical Theory views the entrepreneur as a rational coordinator who organises land, labour, and capital. The Classical Theory focuses solely on profit maximisation; the Dynamic Theory addresses disequilibrium."
+  },
+
+  // ── Q32 – ENTREPRENEURIAL PROCESS ──
+  {
+    topic:"Entrepreneurial Process",
+    q:"Which of the following correctly represents the logical sequence of the entrepreneurial process?",
+    opts:[
+      "Opportunity identification → Resource mobilisation → Idea generation → Venture creation",
+      "Idea generation → Opportunity evaluation → Resource mobilisation → Venture creation",
+      "Venture creation → Idea generation → Resource mobilisation → Opportunity evaluation",
+      "Resource mobilisation → Opportunity evaluation → Idea generation → Venture creation"
+    ],
+    ans:1,
+    exp:"The entrepreneurial process flows: Idea Generation → Opportunity Evaluation (screening the idea) → Resource Mobilisation (raising capital, talent) → Venture Creation (launching the business). Opportunity identification precedes resource gathering, not the other way round."
+  },
+
+  // ── Q33 – CREATIVE CONTRIBUTIONS ──
+  {
+    topic:"Methods for Creative Results",
+    q:"Which of the Five (5) types of Creative Contributions involves combining two or more existing ideas to produce a superior new concept?",
+    opts:[
+      "Evolution",
+      "Revolution",
+      "Synthesis",
+      "Reapplication"
+    ],
+    ans:2,
+    exp:"Synthesis involves merging two or more existing ideas or technologies into a single, superior concept. Evolution is incremental improvement; Revolution is a radical break; Reapplication transfers an idea to a new domain."
+  },
+
+  // ── Q34 – NEGATIVE ATTITUDES / CREATIVITY BLOCKS ──
+  {
+    topic:"Methods for Creative Results",
+    q:"An employee refuses to suggest improvements in a meeting, thinking 'It's not my place to challenge the manager.' This is an example of which creativity-blocking attitude?",
+    opts:[
+      "Following the rules rigidly without questioning",
+      "Avoiding ambiguity at all costs",
+      "Fear of looking foolish or being judged by authority",
+      "Over-reliance on logical thinking"
+    ],
+    ans:2,
+    exp:"Fear of ridicule or authority judgment ('It's not my place') is a classic negative attitude that blocks creative expression. It is distinct from rule-following (doing what is prescribed) or avoiding ambiguity (needing certainty)."
+  },
+
+  // ── Q35 – IP: DEFINE INTELLECTUAL PROPERTY ──
+  {
+    topic:"Intellectual Property",
+    q:"Intellectual Property (IP) is best defined as:",
+    opts:[
+      "Physical assets owned by a company, including machinery and buildings",
+      "Creations of the mind — inventions, artistic works, names, images used in commerce",
+      "All government-registered business assets that generate revenue",
+      "Financial instruments like bonds and equity shares"
+    ],
+    ans:1,
+    exp:"Intellectual Property refers to creations of the mind — inventions (patents), artistic and literary works (copyright), symbols and names (trademarks), and designs. It is intangible, unlike physical or financial assets."
+  },
+
+  // ── Q36 – COPYRIGHT DURATION ──
+  {
+    topic:"Intellectual Property",
+    q:"Under most international copyright frameworks, the standard duration of copyright protection for an individual author's work is:",
+    opts:[
+      "20 years from the date of filing",
+      "Life of the author plus 70 years",
+      "50 years from the date of first publication, regardless of the author's lifespan",
+      "Indefinitely, provided the work remains in commercial use"
+    ],
+    ans:1,
+    exp:"The Berne Convention standard — adopted by most countries — grants copyright for the life of the author plus a minimum of 50 years (many jurisdictions, including the EU and USA, extend this to life + 70 years). Patents last 20 years; trademarks are renewable indefinitely."
+  },
+
+  // ── Q37 – TECHNOLOGY COMPONENTS ──
+  {
+    topic:"Technology & Entrepreneurial Opportunities",
+    q:"Which of the following is NOT among the standard components of technology as applied in entrepreneurship?",
+    opts:[
+      "Technoware (physical tools and equipment)",
+      "Humanware (knowledge and skills of people)",
+      "Orgaware (organisational frameworks and systems)",
+      "Financeware (capital and investment instruments)"
+    ],
+    ans:3,
+    exp:"The four standard components of technology are: Technoware (equipment), Humanware (human knowledge/skills), Infoware (documented knowledge), and Orgaware (organisational systems). 'Financeware' is not a recognised technology component."
+  },
+
+  // ── Q38 – TECHNOLOGICAL ENVIRONMENT ──
+  {
+    topic:"Technology & Entrepreneurial Opportunities",
+    q:"The concept of the 'technological environment' in relation to business primarily refers to:",
+    opts:[
+      "The physical infrastructure of a country such as roads and power supply",
+      "The external technological forces — innovations, R&D trends, and digital shifts — that affect how businesses operate",
+      "The in-house IT systems and software used by a company",
+      "Government expenditure on science and technology education"
+    ],
+    ans:1,
+    exp:"The technological environment encompasses the broader external forces — emerging technologies, R&D breakthroughs, automation trends, and digital transformation — that shape competitive conditions and create or destroy business opportunities."
+  },
+
+  // ── Q39 – FAMILY BUSINESS DEFINITION ──
+  {
+    topic:"Family Business",
+    q:"Which of the following BEST distinguishes a family business from other types of business?",
+    opts:[
+      "It is always small in size and unregistered",
+      "Ownership and/or management control is held by members of one or more related families",
+      "It is wholly funded by family savings with no external investors",
+      "It operates exclusively in the informal sector of the economy"
+    ],
+    ans:1,
+    exp:"A family business is defined by family ownership and/or management control — not by size, registration status, or funding source. Many large multinationals (e.g., Ford, Samsung) are family businesses by this definition."
+  },
+
+  // ── Q40 – FAMILY BUSINESS DISADVANTAGES ──
+  {
+    topic:"Family Business",
+    q:"Which of the following is a disadvantage UNIQUE to family businesses compared to non-family businesses?",
+    opts:[
+      "Difficulty accessing bank loans due to small size",
+      "Inability to register as a limited liability company",
+      "Nepotism — appointing unqualified family members over competent outsiders",
+      "Exposure to market competition from larger firms"
+    ],
+    ans:2,
+    exp:"Nepotism — hiring or promoting based on family ties rather than merit — is a challenge unique to family businesses. Small size, limited credit, and competition affect many businesses but are not exclusive to family firms."
+  },
+
+  // ── Q41 – CHALLENGES OF FAMILY BUSINESS ──
+  {
+    topic:"Family Business",
+    q:"The most dangerous transition point for a family business, often called 'the three-generation curse,' refers to:",
+    opts:[
+      "The difficulty of registering the business in the founder's name",
+      "The tendency for business wealth to be depleted by the third generation due to poor succession",
+      "Legal complications when a family member leaves the business",
+      "The inability of family businesses to attract non-family investors"
+    ],
+    ans:1,
+    exp:"The 'three-generation curse' (shirt-sleeves to shirt-sleeves in three generations) describes how the founding generation builds wealth, the second generation maintains it, and the third generation dissipates it — largely due to lack of succession planning, governance, and financial discipline."
+  },
+
+  // ── Q42 – ENTREPRENEURIAL ENVIRONMENT: ECONOMIC ──
+  {
+    topic:"Entrepreneurial Environment",
+    q:"A sharp rise in Nigeria's inflation rate from 12% to 28% within one year would most directly affect entrepreneurship by:",
+    opts:[
+      "Reducing the entrepreneur's tax obligations",
+      "Increasing purchasing power of target customers",
+      "Raising input costs and reducing real consumer purchasing power",
+      "Encouraging more foreign direct investment"
+    ],
+    ans:2,
+    exp:"High inflation increases the cost of raw materials, energy, and labour (raising input costs) while simultaneously eroding consumers' real purchasing power — squeezing entrepreneurs from both supply and demand sides."
+  },
+
+  // ── Q43 – SOCIAL ENTREPRENEURSHIP DEFINITION ──
+  {
+    topic:"Social Entrepreneurship",
+    q:"Social entrepreneurship is best distinguished from conventional entrepreneurship by its:",
+    opts:[
+      "Use of exclusively non-profit organisational structures",
+      "Primary mission to create social value, with profit as a secondary or enabling goal",
+      "Reliance on government grants rather than market revenue",
+      "Focus on rural communities to the exclusion of urban markets"
+    ],
+    ans:1,
+    exp:"Social entrepreneurship prioritises social, environmental, or community impact as its primary mission. Profit may be generated but serves the mission rather than being the end goal. Social enterprises can be for-profit, non-profit, or hybrid."
+  },
+
+  // ── Q44 – WOMEN ENTREPRENEURSHIP: GOVERNMENT SUPPORT ──
+  {
+    topic:"Women Entrepreneurship",
+    q:"Which of the following government initiatives would MOST directly address the finance access barrier faced by women entrepreneurs in Nigeria?",
+    opts:[
+      "Building more roads in rural areas",
+      "Establishing dedicated women-focused microfinance and guarantee schemes",
+      "Increasing corporate tax rates to fund welfare programmes",
+      "Expanding secondary school enrolment for girls"
+    ],
+    ans:1,
+    exp:"Dedicated microfinance institutions and credit guarantee schemes (like the Government Enterprise and Empowerment Programme, GEEP) directly solve the collateral and credit-access problem that disproportionately affects women entrepreneurs."
+  },
+
+  // ── Q45 – ENTREPRENEURIAL SKILLS: NATIONAL DEVELOPMENT ──
+  {
+    topic:"Benefits of Entrepreneurial Skills",
+    q:"An economy with strong entrepreneurial culture is most likely to achieve sustained GDP growth primarily because:",
+    opts:[
+      "Entrepreneurs reduce the government's need to borrow from the IMF",
+      "Entrepreneurship generates innovation, employment, and new taxable income streams",
+      "Entrepreneurs replace civil servants, reducing government wage bills",
+      "Entrepreneurial activity automatically attracts foreign aid"
+    ],
+    ans:1,
+    exp:"Entrepreneurs drive GDP growth through three main channels: innovation (productivity gains), employment creation (reducing dependence on government jobs), and new taxable income/profit streams that expand the government's fiscal base."
+  },
+
+  // ── Q46 – CREATIVE PERSONALITY (tricky) ──
+  {
+    topic:"Creative Personality",
+    q:"Two characteristics of the creative personality that appear contradictory but must coexist are:",
+    opts:[
+      "Curiosity and self-discipline",
+      "Risk-taking and persistence in the face of failure",
+      "Flexibility and independence",
+      "Imagination and observance"
+    ],
+    ans:1,
+    exp:"Risk-taking (accepting failure as possible) and persistence (refusing to quit after failure) appear to conflict — one tolerates losing, the other refuses to accept it. Yet both must coexist in a creative entrepreneur: try boldly, then persist through setbacks."
+  },
+
+  // ── Q47 – IP: ROYALTY vs LICENCE ──
+  {
+    topic:"Intellectual Property",
+    q:"A Nigerian music streaming platform pays a monthly fee to a record label for the right to host 10,000 songs. This payment is best described as:",
+    opts:[
+      "A trademark licensing fee",
+      "A patent royalty",
+      "A copyright licence royalty",
+      "An assignment consideration"
+    ],
+    ans:2,
+    exp:"Music is protected by copyright. The streaming platform pays a royalty under a copyright licence — permission to use the copyrighted works in exchange for ongoing payments. An assignment would transfer ownership permanently; a patent royalty relates to inventions."
+  },
+
+  // ── Q48 – ENTREPRENEUR vs MANAGER ──
+  {
+    topic:"Roles of Entrepreneurs",
+    q:"The fundamental distinction between an entrepreneur and a professional manager is that:",
+    opts:[
+      "The manager bears financial risk while the entrepreneur earns a salary",
+      "The entrepreneur creates and owns the venture and bears its risks; the manager operates within an existing structure for a fixed compensation",
+      "Entrepreneurs only work in small businesses while managers work in large corporations",
+      "Managers are more innovative than entrepreneurs by professional training"
+    ],
+    ans:1,
+    exp:"The entrepreneur creates the venture, bears financial/personal risk, and owns the outcomes. The manager is employed to run an existing structure, earning a salary without bearing the venture's existential risk — even if highly skilled."
+  },
+
+  // ── Q49 – INFOWARE ──
+  {
+    topic:"Technology & Entrepreneurial Opportunities",
+    q:"A manufacturing firm's detailed production manuals, technical patents, and proprietary databases constitute which component of technology?",
+    opts:[
+      "Technoware",
+      "Humanware",
+      "Infoware",
+      "Orgaware"
+    ],
+    ans:2,
+    exp:"Infoware refers to documented knowledge — manuals, patents, databases, blueprints, and technical specifications. Technoware = physical tools; Humanware = human skills and expertise; Orgaware = organisational and management systems."
+  },
+
+  // ── Q50 – BUSINESS OPPORTUNITY: IMPORT SUBSTITUTION ──
+  {
+    topic:"Business Opportunities in Nigeria",
+    q:"Nigeria imports over ₦2 trillion worth of tomato paste annually despite having ideal agro-climatic conditions for tomato cultivation. An entrepreneur who establishes a local tomato processing plant is exploiting which source of business opportunity?",
+    opts:[
+      "Demographic change — growing population needs more food",
+      "SWOT Analysis identifying a strength in natural resources",
+      "Import substitution — replacing costly imports with local production",
+      "Technological change — modern agri-processing equipment becoming available"
+    ],
+    ans:2,
+    exp:"Producing locally what is currently imported — thereby reducing foreign exchange outflows and meeting local demand — is the definition of import substitution as a source of business opportunity. While natural resources and technology are enabling factors, the primary opportunity driver here is import substitution."
+  }
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let cur = 0, answered = new Array(QUESTIONS.length).fill(null), startTime, timerID;
+const TOTAL = QUESTIONS.length, TIME = 50 * 60;
+
+function $(id){ return document.getElementById(id); }
+
+function init(){
+  answered = new Array(TOTAL).fill(null);
+  cur = 0;
+  buildNav();
+  renderQ();
+  $("quiz-main").style.display = "";
+  $("results").style.display = "none";
+  if(timerID) clearInterval(timerID);
+  startTime = Date.now();
+  let remaining = TIME;
+  updateTimer(remaining);
+  timerID = setInterval(()=>{
+    remaining--;
+    updateTimer(remaining);
+    if(remaining <= 0){ clearInterval(timerID); submitAll(); }
+  }, 1000);
+}
+
+function buildNav(){
+  const p = $("nav-panel");
+  p.innerHTML = "";
+  QUESTIONS.forEach((_,i)=>{
+    const b = document.createElement("button");
+    b.className = "nav-btn" + (i===cur?" active":"");
+    b.id = "nb"+i;
+    b.textContent = i+1;
+    b.onclick = ()=>{ cur=i; renderQ(); };
+    p.appendChild(b);
+  });
+}
+
+function updateNavBtn(i){
+  const b = $("nb"+i);
+  if(!b) return;
+  b.className = "nav-btn";
+  if(answered[i]!==null){
+    const isCorrect = answered[i] === QUESTIONS[i].ans;
+    b.classList.add(isCorrect?"correct":"wrong");
+  }
+  if(i===cur) b.classList.add("active");
+}
+
+function renderQ(){
+  // update nav highlight
+  QUESTIONS.forEach((_,i)=> $("nb"+i) && $("nb"+i).classList.remove("active"));
+  $("nb"+cur) && $("nb"+cur).classList.add("active");
+
+  const q = QUESTIONS[cur];
+  const locked = answered[cur] !== null;
+  const letters = ["A","B","C","D"];
+
+  let optsHTML = q.opts.map((o,i)=>{
+    let cls = "opt";
+    if(locked){
+      cls += " locked";
+      if(i === q.ans) cls += " correct";
+      else if(i === answered[cur]) cls += " wrong";
+    } else if(answered[cur]===i){
+      cls += " selected";
+    }
+    return `<div class="${cls}" onclick="selectOpt(${i})">
+      <div class="opt-letter">${letters[i]}</div>
+      <div class="opt-text">${o}</div>
+    </div>`;
+  }).join("");
+
+  const expShow = locked ? "show" : "";
+  const totalAnswered = answered.filter(x=>x!==null).length;
+  const correct = answered.reduce((a,v,i)=> v===QUESTIONS[i].ans ? a+1 : a, 0);
+
+  const isLast = cur === TOTAL-1;
+  const navBtns = `
+    <button class="btn btn-skip" onclick="skip()">⏭ Skip</button>
+    ${locked ? `<button class="btn ${isLast?"btn-submit":"btn-next"}" onclick="${isLast?"submitAll()":"nextQ()"}">${isLast?"🏁 Finish":"Next ▶"}</button>` : ""}
+  `;
+
+  $("q-card").innerHTML = `
+    <div class="q-meta">
+      <span class="q-label">${q.topic}</span>
+      <span class="q-num">Q ${cur+1} of ${TOTAL}</span>
+    </div>
+    <div class="q-text">${q.q}</div>
+    <div class="options">${optsHTML}</div>
+    <div class="explanation ${expShow}"><strong>📖 Explanation:</strong> ${q.exp}</div>
+    <div class="btn-row">${navBtns}</div>
+  `;
+
+  $("hdr-qcount").textContent = `Q ${cur+1} / ${TOTAL}`;
+  $("prog-bar").style.width = ((cur+1)/TOTAL*100)+"%";
+  $("sc-val").textContent = correct;
+  $("sc-tot").textContent = totalAnswered;
+}
+
+function selectOpt(i){
+  if(answered[cur] !== null) return;
+  answered[cur] = i;
+  updateNavBtn(cur);
+  renderQ();
+}
+
+function skip(){
+  if(cur < TOTAL-1){ cur++; renderQ(); }
+  else submitAll();
+}
+
+function nextQ(){
+  if(cur < TOTAL-1){ cur++; renderQ(); }
+}
+
+function updateTimer(s){
+  const m = Math.floor(s/60), sec = s%60;
+  $("timer").textContent = m+":"+(sec<10?"0":"")+sec;
+  if(s<=120) $("timer").style.color = "var(--wrong)";
+}
+
+function submitAll(){
+  clearInterval(timerID);
+  const elapsed = Math.round((Date.now()-startTime)/1000);
+  const correct = answered.reduce((a,v,i)=> v===QUESTIONS[i].ans ? a+1 : a, 0);
+  const wrong   = answered.reduce((a,v,i)=> v!==null && v!==QUESTIONS[i].ans ? a+1 : a, 0);
+  const skipped = answered.filter(x=>x===null).length;
+  const pct = Math.round(correct/TOTAL*100);
+
+  // Nigerian grade
+  let grade, title, col;
+  if(pct>=70){grade="A";title="Distinction 🎉";col="var(--correct)";}
+  else if(pct>=60){grade="B";title="Credit 👍";col="var(--teal)";}
+  else if(pct>=50){grade="C";title="Merit";col="var(--gold)";}
+  else if(pct>=45){grade="D";title="Pass";col="#e0a000";}
+  else{grade="F";title="Fail — Keep studying 💪";col="var(--wrong)";}
+
+  $("grade-circle").style.borderColor = col;
+  $("grade-circle").style.color = col;
+  $("pct").textContent = pct+"%";
+  $("grade-lbl").textContent = grade;
+  $("result-title").textContent = title;
+  $("result-sub").textContent = `You answered ${correct} of ${TOTAL} correctly.`;
+  $("res-correct").textContent = correct;
+  $("res-wrong").textContent   = wrong;
+  $("res-skip").textContent    = skipped;
+  const em = Math.floor(elapsed/60), es = elapsed%60;
+  $("res-time").textContent    = em+":"+(es<10?"0":"")+es;
+
+  // Review
+  const rl = $("review-list");
+  rl.innerHTML = QUESTIONS.map((q,i)=>{
+    const a = answered[i];
+    const isC = a === q.ans;
+    const letters = ["A","B","C","D"];
+    return `<div class="review-item ${isC?"r-correct":"r-wrong"}">
+      <div class="review-q">Q${i+1}. ${q.q}</div>
+      <div class="review-ans">
+        ${a!==null ? `<span class="your-ans">Your answer: (${letters[a]}) ${q.opts[a]}</span><br>` : `<span style="color:var(--muted)">Skipped</span><br>`}
+        <span class="correct-ans">✅ Correct: (${letters[q.ans]}) ${q.opts[q.ans]}</span>
+      </div>
+      <div class="review-exp">${q.exp}</div>
+    </div>`;
+  }).join("");
+
+  $("quiz-main").style.display = "none";
+  $("results").style.display   = "block";
+  $("nav-panel").style.display = "none";
+  $("timer-strip").style.display = "none";
+}
+
+function restart(){
+  $("nav-panel").style.display = "";
+  $("timer-strip").style.display = "";
+  buildNav();
+  init();
+}
+
+init();
+</script>
+</body>
+</html>
